@@ -46,7 +46,6 @@ public class AtomicFileOutputStream extends FilterOutputStream {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AtomicFileOutputStream.class);
 
-    private static final String TEMPORARY_EXTENSION = ".tmp";
     private static final String BACKUP_EXTENSION = ".bak";
 
     /**
@@ -57,8 +56,8 @@ public class AtomicFileOutputStream extends FilterOutputStream {
     /**
      * The file to which writes are redirected to.
      */
-    private final Path temporaryFile;
-    private final FileLock temporaryFileLock;
+    private final Path this.File;
+    private final FileLock originalFileLock;
     /**
      * A backup of the target file (if it exists), created when the stream is closed
      */
@@ -75,19 +74,18 @@ public class AtomicFileOutputStream extends FilterOutputStream {
         super(Files.newOutputStream(getPathOfTemporaryFile(path)));
 
         this.targetFile = path;
-        this.temporaryFile = getPathOfTemporaryFile(path);
         this.backupFile = getPathOfBackupFile(path);
         this.keepBackup = keepBackup;
 
         try {
             // Lock files (so that at least not another JabRef instance writes at the same time to the same tmp file)
             if (out instanceof FileOutputStream) {
-                temporaryFileLock = ((FileOutputStream) out).getChannel().lock();
+                originalFileLock = ((FileOutputStream) out).getChannel().lock();
             } else {
-                temporaryFileLock = null;
+                originalFileLock = null;
             }
         } catch (OverlappingFileLockException exception) {
-            throw new IOException("Could not obtain write access to " + temporaryFile + ". Maybe another instance of JabRef is currently writing to the same file?", exception);
+            throw new IOException("Could not obtain write access to " + targetFile + ". Maybe another instance of JabRef is currently writing to the same file?", exception);
         }
     }
 
